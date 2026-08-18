@@ -10,7 +10,7 @@ from .elem_tables import AFF_ELEMENTS
 
 
 def parse_composition(composition: str | dict[str, float] | None) -> dict[str, float]:
-    """  Parse Composition from an input string.
+    """Parse Composition from an input string.
 
     [EN] Parse a composition string from the Control Panel and turn it into a.
          dictionary (EZPDF_GUI_3 helpers.py behaviour).
@@ -143,7 +143,9 @@ def parse_composition(composition: str | dict[str, float] | None) -> dict[str, f
     return cast(dict[str, float], composition_dict)
 
 
-def composition_weights(composition: str | dict[str, float]) -> tuple[list[str], np.ndarray[tuple[int], np.dtype[np.float64]]]:
+def composition_weights(
+    composition: str | dict[str, float],
+) -> tuple[list[str], np.ndarray[tuple[int], np.dtype[np.float64]]]:
     """
     [EN] Turn a composition dict into unique element names and their amounts.
 
@@ -191,7 +193,9 @@ def composition_weights(composition: str | dict[str, float]) -> tuple[list[str],
     return names, weights
 
 
-def load_atom_name_positions(file_path: str | Path, valid_symbols: list[str] = AFF_ELEMENTS) -> tuple[list[str], np.ndarray[tuple[int], np.dtype[np.float64]]]:
+def load_atom_name_positions(
+    file_path: str | Path, valid_symbols: list[str] = AFF_ELEMENTS
+) -> tuple[list[str], np.ndarray[tuple[int], np.dtype[np.float64]]]:
     """
     [EN] Load atom names and (x, y, z) positions from an .xyz file.
 
@@ -353,7 +357,9 @@ def convert_atom_names(composition: str | dict[str, float]) -> list[str]:
     return [el for el, count in comp.items() for _ in range(int(count))]
 
 
-def group_atoms(atom_names: list[str]) -> tuple[list[str], np.ndarray[tuple[int], np.dtype[np.int64]], np.ndarray[tuple[int], np.dtype[np.int64]]]:
+def group_atoms(
+    atom_names: list[str],
+) -> tuple[list[str], np.ndarray[tuple[int], np.dtype[np.int64]], np.ndarray[tuple[int], np.dtype[np.int64]]]:
     """
     Get unique atom names, their counts, and the index of atom in the unique.
 

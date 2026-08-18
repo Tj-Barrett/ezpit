@@ -6,12 +6,12 @@ from math import (
 from typing import Any
 
 import numpy as np
-from numpy.typing import NDArray
 
 # --- [EN] Added imports for Whittaker smoothing / [KR] Whittaker 스무딩 기능을 위해 추가된 라이브러리 ---
 # [EN] Sparse matrix package for efficient memory usage
 # [KR] 메모리를 효율적으로 쓰는 희소 행렬 패키지
 import scipy.sparse as sp
+from numpy.typing import NDArray
 from scipy import interpolate
 from scipy.linalg import (
     LinAlgError,
