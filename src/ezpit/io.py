@@ -1,14 +1,17 @@
 import os
 from collections import Counter
 from pathlib import Path
+from typing import cast
 
 import numpy as np
+from numpy.typing import NDArray
 
 from .elem_tables import AFF_ELEMENTS
 
 
-def parse_composition(composition: str | dict[str, float]) -> dict[str, float]:
-    """
+def parse_composition(composition: str | dict[str, float] | None) -> dict[str, float]:
+    """  Parse Composition from an input string.
+
     [EN] Parse a composition string from the Control Panel and turn it into a.
          dictionary (EZPDF_GUI_3 helpers.py behaviour).
          Both spaced and compact styles are accepted, and a quantity of 1 may be
@@ -49,7 +52,7 @@ def parse_composition(composition: str | dict[str, float]) -> dict[str, float]:
     # [KR] 공백 제거 → 'Co 38 O 119' 와 'Co38O119' 를 동일하게 파싱
     compact = "".join(ch for ch in composition if not ch.isspace())
 
-    composition_dict = Counter()
+    composition_dict: Counter[str] = Counter()
     i = 0
     length = len(compact)
     while i < length:
@@ -131,7 +134,13 @@ def parse_composition(composition: str | dict[str, float]) -> dict[str, float]:
     if not composition_dict:
         raise ValueError(f'Invalid composition string "{composition}": no element found')
 
-    return composition_dict
+    # [EN] Counter's stub types values as int only; this dict legitimately holds
+    #      floats too (fractional compositions like 'Li0.2Co0.36...'), so the
+    #      declared return type is cast rather than restructured away from Counter.
+    # [KR] Counter의 타입 스텁은 값을 int로만 선언하지만, 이 dict는 소수 조성
+    #      (예: 'Li0.2Co0.36...')일 때 float 값도 실제로 가집니다. Counter 구조를
+    #      바꾸는 대신 선언된 반환 타입으로 캐스팅합니다.
+    return cast(dict[str, float], composition_dict)
 
 
 def composition_weights(composition: str | dict[str, float]) -> tuple[list[str], np.ndarray[tuple[int], np.dtype[np.float64]]]:
@@ -285,7 +294,7 @@ def load_atom_name_positions(file_path: str | Path, valid_symbols: list[str] = A
             "your form-factor table (valid_symbols)."
         )
 
-    atom_positions = np.array(atom_positions, dtype=float)
+    atom_positions_arr = np.array(atom_positions, dtype=float)
 
     # ------------------------------------------------------------------
     # [EN] Report what was actually read from the file. The total is the number
@@ -312,7 +321,7 @@ def load_atom_name_positions(file_path: str | Path, valid_symbols: list[str] = A
     else:
         print(f"[load_atom_name_positions] '{fname}': {total} atoms read (all neutral, no ions).")
 
-    return atom_names, atom_positions
+    return atom_names, atom_positions_arr
 
 
 def convert_atom_names(composition: str | dict[str, float]) -> list[str]:
@@ -362,7 +371,7 @@ def group_atoms(atom_names: list[str]) -> tuple[list[str], np.ndarray[tuple[int]
     return atom_uni_names, np.asarray(atom_counts), np.asarray(atom_indices)
 
 
-def make_folder(file_path):
+def make_folder(file_path: str) -> None:
     """
     Create a folder for saving file if the folder does not exist. This is a.
 
@@ -381,6 +390,6 @@ def make_folder(file_path):
             raise ValueError(f"Can't create the folder: {file_base}") from e
 
 
-def save_txt(filename, q_Iq):
+def save_txt(filename: str, q_Iq: NDArray[np.float64]) -> None:
     make_folder(filename)
     np.savetxt(filename, q_Iq)

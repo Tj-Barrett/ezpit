@@ -3,8 +3,10 @@ import warnings
 from math import (
     factorial,
 )  # [EN] Mathematical factorial function / [KR] 수학 팩토리얼 함수
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 # --- [EN] Added imports for Whittaker smoothing / [KR] Whittaker 스무딩 기능을 위해 추가된 라이브러리 ---
 # [EN] Sparse matrix package for efficient memory usage
@@ -33,7 +35,7 @@ def _warn_once(message: str) -> None:
     print("[Warning] " + message)
 
 
-def reset_warning_history():
+def reset_warning_history() -> None:
     """Allow previously reported warnings to be shown again.
 
     Call this when the user changes files, so a genuinely new situation is
@@ -42,7 +44,8 @@ def reset_warning_history():
     _WARNED_MESSAGES.clear()
 
 
-def create_atom_distance_matrix(atom_positions):
+def create_atom_distance_matrix(atom_positions: NDArray[np.float64]
+) -> NDArray[np.float64]:
     """
     [EN] Calculate the pairwise Euclidean distance matrix for all atoms.
 
@@ -74,7 +77,8 @@ def create_atom_distance_matrix(atom_positions):
     return cdist(atom_positions, atom_positions)
 
 
-def __cal_fi(scat_values: list[float], q: float | np.ndarray[tuple[int], np.dtype[np.float32]]) -> float | np.ndarray[tuple[int], np.dtype[np.float32]]:
+def __cal_fi(scat_values: list[float], q: float | np.ndarray[tuple[int], np.dtype[np.float32]]
+) -> float | np.ndarray[tuple[int], np.dtype[np.float32]]:
     """
     [EN] Calculate atomic form factor f(q) using 5-Gaussian approximation.
 
@@ -100,7 +104,9 @@ def __cal_fi(scat_values: list[float], q: float | np.ndarray[tuple[int], np.dtyp
     return fi
 
 
-def __cal_compton_fi(compton_scattering_factors, q):
+def __cal_compton_fi(
+    compton_scattering_factors: list[float] | NDArray[np.float64], q: float | NDArray[np.float64]
+) -> float | NDArray[np.float64]:
     """
     [EN] Calculate Compton scattering form factor (Inelastic scattering).
 
@@ -118,17 +124,17 @@ def __cal_compton_fi(compton_scattering_factors, q):
 
 
 def compton_cal_exp(
-    atom_indices,
-    compton_scat_parms,
-    compton_scattering_factors,
-    atomic_number,
-    qmin,
-    qmax,
-    qstep,
-    wavelength,
-    alpha,
-    weights=None,
-):
+    atom_indices: list[int] | NDArray[np.int64],
+    compton_scat_parms: NDArray[np.float64],
+    compton_scattering_factors: NDArray[np.float64],
+    atomic_number: NDArray[np.float64],
+    qmin: float,
+    qmax: float,
+    qstep: float,
+    wavelength: float,
+    alpha: float,
+    weights: NDArray[np.float64] | None = None,
+) -> tuple[NDArray[np.float64], list[float]]:
     """
     [EN] Calculate total experimental Compton scattering intensity.
 
@@ -216,7 +222,8 @@ def compton_cal_exp(
 # ----------------------------------------------------------------------------------
 # Lorch Function Added (Requested 12/28/2025)
 # ----------------------------------------------------------------------------------
-def lorch_function_sinc(Q, Q_max):
+def lorch_function_sinc(Q: NDArray[np.float64] | float, Q_max: float | np.float64
+) -> NDArray[np.float64]:
     """
     [EN] Calculate the Lorch modification function M(Q).
 
@@ -233,7 +240,8 @@ def lorch_function_sinc(Q, Q_max):
     return np.sinc(Q / Q_max)
 
 
-def apply_lorch_function(Q, FQ):
+def apply_lorch_function(Q: NDArray[np.float64], FQ: NDArray[np.float64]
+) -> NDArray[np.float64]:
     """
     [EN] Apply the Lorch function to F(Q) data.
 
@@ -255,13 +263,13 @@ def apply_lorch_function(Q, FQ):
 
 
 def cal_Iq(
-    atom_indices,
-    scattering_factors,
-    atom_distance_matrix,
-    qmin=0.5,
-    qmax=20,
-    qstep=0.05,
-):
+    atom_indices: list[int] | NDArray[np.int64],
+    scattering_factors: NDArray[np.float64],
+    atom_distance_matrix: NDArray[np.float64],
+    qmin: float = 0.5,
+    qmax: float = 20,
+    qstep: float = 0.05,
+) -> tuple[NDArray[np.float64], list[float]]:
     """
     [EN] Calculate the total Scattering Intensity I(q) based on the Debye scattering equation.
 
@@ -336,13 +344,23 @@ def cal_Iq(
 
 
 def cal_Sq(
-    atom_indices,
-    scattering_factors,
-    atom_distance_matrix,
-    qmin=0.5,
-    qmax=20,
-    qstep=0.05,
-    return_Iq=False,
+    atom_indices: list[int] | NDArray[np.int64],
+    scattering_factors: NDArray[np.float64],
+    atom_distance_matrix: NDArray[np.float64],
+    qmin: float = 0.5,
+    qmax: float = 20,
+    qstep: float = 0.05,
+    return_Iq: bool = False,
+) -> (
+    tuple[NDArray[np.float64], NDArray[np.float64]]
+    | tuple[
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
+        NDArray[np.float64],
+    ]
 ):
     """
     [EN] Calculate theoretical Structure Factor S(q) using the Debye scattering equation.
@@ -446,7 +464,14 @@ def cal_Sq(
         return q_range, list_Sq
 
 
-def cal_Gr_integral(q, Sq, rmin=0, rmax=100, rstep=0.02, qdamp=0.0):
+def cal_Gr_integral(
+    q: NDArray[np.float64],
+    Sq: NDArray[np.float64],
+    rmin: float = 0,
+    rmax: float = 100,
+    rstep: float = 0.02,
+    qdamp: float = 0.0,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """
     [EN] Calculate the Pair Distribution Function G(r) from Structure Factor S(q) using direct sine integral transform.
 
@@ -508,7 +533,15 @@ def cal_Gr_integral(q, Sq, rmin=0, rmax=100, rstep=0.02, qdamp=0.0):
     return list_r, list_Gr
 
 
-def cal_Gr_fft(q, Sq, rmin=0, rmax=100, rstep=0.02, qdamp=0.0, extrapolate_type="linear"):
+def cal_Gr_fft(
+    q: NDArray[np.float64],
+    Sq: NDArray[np.float64],
+    rmin: float = 0,
+    rmax: float = 100,
+    rstep: float = 0.02,
+    qdamp: float = 0.0,
+    extrapolate_type: str = "linear",
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """
     [EN] Calculate the Pair Distribution Function G(r) via Inverse Fast Fourier Transform.
 
@@ -608,17 +641,33 @@ def cal_Gr_fft(q, Sq, rmin=0, rmax=100, rstep=0.02, qdamp=0.0, extrapolate_type=
 # [Cal_expSq] Core Analysis Function / 핵심 분석 함수
 # ----------------------------------------------------------------------------------
 def cal_expSq(
-    atom_indices,
-    scattering_factors,
-    expqiq,
-    bkgqiq,
-    qmin=0,
-    qmax=25,
-    qstep=0.01,
-    background_scale=1.1,
-    poly_order=11.0,
-    return_Iq=False,
-    weights=None,
+    atom_indices: list[int] | NDArray[np.int64],
+    scattering_factors: NDArray[np.float64],
+    expqiq: str | NDArray[np.float64] | tuple[NDArray[np.float64], NDArray[np.float64]],
+    bkgqiq: str | NDArray[np.float64] | tuple[NDArray[np.float64], NDArray[np.float64]] | None,
+    qmin: float = 0,
+    qmax: float = 25,
+    qstep: float = 0.01,
+    background_scale: float = 1.1,
+    poly_order: float = 11.0,
+    return_Iq: bool = False,
+    weights: NDArray[np.float64] | None = None,
+) -> (
+    tuple[
+        NDArray[np.float64],  # q_range
+        NDArray[np.float64],  # list_Iq
+        NDArray[np.float64],  # scaled_expIq
+        NDArray[np.float64],  # list_scaled_bkgIq
+        NDArray[np.float64],  # list_Sq
+        NDArray[np.float64],  # norm_list_Sq
+        NDArray[np.float64],  # list_Fq
+        NDArray[np.float64],  # mean_sq_fi
+        NDArray[np.float64],  # sq_mean_fi
+        NDArray[np.float64],  # polynomial_for_sq
+        NDArray[np.float64],  # normalized_intensity
+        NDArray[np.float64],  # normal_scattering_factor
+        float,  # normalization_scale (scalar)
+    ]
 ):
     """
     [EN] Core function to calculate Structure Factor S(q) and F(q) from experimental I(q).
@@ -682,7 +731,7 @@ def cal_expSq(
         data_bkg = load_qiq_file(bkgqiq, min_cols=2, usecols=(0, 1))
         bkg_Iq = data_bkg[:, 1]
     elif bkgqiq is not None:
-        if hasattr(bkgqiq, "shape") and len(bkgqiq.shape) > 1:
+        if isinstance(bkgqiq, np.ndarray) and bkgqiq.ndim > 1:
             bkg_Iq = bkgqiq[1]
         elif isinstance(bkgqiq, (list, tuple)) and len(bkgqiq) == 2 and hasattr(bkgqiq[0], "__len__"):
             bkg_Iq = bkgqiq[1]
@@ -873,7 +922,8 @@ def cal_expSq(
         )
 
 
-def cal_fq(qmin, qmax, Sq, qstep=0.01):
+def cal_fq(qmin: float, qmax: float, Sq: NDArray[np.float64], qstep: float = 0.01
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """
     [EN] Calculate the Reduced Structure Function F(q) from Structure Factor S(q).
 
@@ -923,16 +973,25 @@ def cal_fq(qmin, qmax, Sq, qstep=0.01):
 
 
 def cal_expGr_fft(
-    q,
-    Sq_or_Fq,
-    rmin=0,
-    rmax=100,
-    rstep=0.01,
-    is_Fq=False,
-    pad_mode="zero",
-    low_q_mode="anchor",
-    extrapolate_type="linear",
-    return_padding=False,
+    q: NDArray[np.float64],
+    Sq_or_Fq: NDArray[np.float64],
+    rmin: float = 0,
+    rmax: float = 100,
+    rstep: float = 0.01,
+    is_Fq: bool = False,
+    pad_mode: str = "zero",
+    low_q_mode: str = "anchor",
+    extrapolate_type: str = "linear",
+    return_padding: bool = False,
+) -> (
+    tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]]]
+    | tuple[
+        NDArray[np.floating[Any]],
+        NDArray[np.floating[Any]],
+        dict[str, NDArray[np.floating[Any]] | float | int],
+    ]
+    | tuple[None, None]
+    | tuple[None, None, None]
 ):
     """
     [EN] Calculate G(r) from S(q) or F(q) using IFFT with low-q extrapolation.
@@ -1134,15 +1193,15 @@ def cal_expGr_fft(
 
 
 def cal_expGr_fft_from_Fq(
-    q,
-    Fq,
-    rmin=0,
-    rmax=100,
-    rstep=0.01,
-    pad_mode="zero",
-    low_q_mode="anchor",
-    extrapolate_type="linear",
-):
+    q: NDArray[np.float64],
+    Fq: NDArray[np.float64],
+    rmin: float = 0,
+    rmax: float = 100,
+    rstep: float = 0.01,
+    pad_mode: str = "zero",
+    low_q_mode: str = "anchor",
+    extrapolate_type: str = "linear",
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """
     [EN] Calculate G(r) directly from F(q) using IFFT.
 
@@ -1210,7 +1269,10 @@ def cal_expGr_fft_from_Fq(
     return r_list, gr
 
 
-def detect_header_lines(path, min_cols=2):
+def detect_header_lines(
+    path: str,
+    min_cols: int = 2,
+) -> int:
     """
     [EN] Automatically detect the number of header lines to skip.
 
@@ -1240,7 +1302,11 @@ def detect_header_lines(path, min_cols=2):
     return skip
 
 
-def load_qiq_file(path, min_cols=2, usecols=(0, 1)):
+def load_qiq_file(
+    path: str,
+    min_cols: int = 2,
+    usecols: tuple[int, int] = (0, 1),
+) -> NDArray[np.float64]:
     """
     [EN] Load Q vs I(q) data from file using automatic header detection.
 
@@ -1260,7 +1326,11 @@ def load_qiq_file(path, min_cols=2, usecols=(0, 1)):
 # =============================================================================
 
 
-def smooth_whittaker(y, lambda_=1600.0, order=2):
+def smooth_whittaker(
+    y: NDArray[np.float64] | list[float],
+    lambda_: float = 1600.0,
+    order: int = 2,
+) -> NDArray[np.float64]:
     """
     [EN] Whittaker-Henderson smoothing algorithm.
 
@@ -1298,14 +1368,14 @@ def smooth_whittaker(y, lambda_=1600.0, order=2):
         raise RuntimeError(f"Unexpected error during smoothing: {e}. Check your lambda and order values.") from e
 
 
-def make_dT_d(n, d):
+def make_dT_d(n: int, d: int):
     """
     [EN] Constructs the penalty matrix (D.T * D) for Whittaker smoothing.
 
     [KR] 스무딩을 위한 차분 행렬의 곱(D.T * D)을 생성합니다.
     """
 
-    def diff_matrix(k, n):
+    def diff_matrix(k: int, n: int):
         D = sp.eye(n, format="csc")
         for _ in range(k):
             D = D[1:] - D[:-1]  # [EN] Difference operator / [KR] 차분 연산자
@@ -1315,28 +1385,28 @@ def make_dT_d(n, d):
     return D.T @ D
 
 
-def bandwidth_to_lambda(bandwidth, order):
+def bandwidth_to_lambda(bandwidth: float, order: int) -> float:
     """Convert a Savitzky-Golay-like bandwidth to Whittaker lambda."""
     return (2 * factorial(order)) ** 2 / (bandwidth ** (2 * order))
 
 
-def smooth_like_savitzky_golay(y, bandwidth, order):
+def smooth_like_savitzky_golay(y: NDArray[np.float64], bandwidth: float, order: int):
     """Whittaker smoothing configured to mimic Savitzky-Golay behavior."""
     lambda_ = bandwidth_to_lambda(bandwidth, order)
     return smooth_whittaker(y, lambda_, order)
 
 
-def noise_gain_to_lambda(gain, order):
+def noise_gain_to_lambda(gain: float, order: int) -> float:
     """Convert noise gain parameter to Whittaker lambda."""
     return (2 * factorial(order)) ** 2 / gain
 
 
-def smooth_with_noise_gain(y, gain=1e-4, order=2):
+def smooth_with_noise_gain(y: NDArray[np.float64], gain: float = 1e-4, order: int = 2):
     """Whittaker smoothing using a noise gain parameter."""
     lambda_ = noise_gain_to_lambda(gain, order)
     return smooth_whittaker(y, lambda_, order)
 
 
-def batch_smooth_whittaker(y_2d, lambda_=1600.0, order=2):
+def batch_smooth_whittaker(y_2d: NDArray[np.float64], lambda_: float = 1600.0, order: int = 2) -> NDArray[np.float64]:
     """Apply Whittaker-Henderson smoothing to each row of a 2D array."""
     return np.array([smooth_whittaker(row, lambda_, order) for row in y_2d])

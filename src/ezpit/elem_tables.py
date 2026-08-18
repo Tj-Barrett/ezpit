@@ -371,7 +371,7 @@ _COMPTON_PARM: np.ndarray[tuple[int, int], np.dtype[np.float32]] = np.array(COMP
 _COMPTON_Z = np.array(COMPTON_ATOMIC_NUMBERS)
 
 
-def get_aff_scattering_factors(atom_names: list[str]) -> np.ndarray[tuple[int]]:
+def get_aff_scattering_factors(atom_names: list[str]) -> np.ndarray[tuple[int, int], np.dtype[np.float32]]:
     """Return atomic form-factor parameters (one row per name)."""
     return np.array([_AFF_PARM[_AFF_INDEX[name.lower()]] for name in atom_names])
 
@@ -380,8 +380,8 @@ def get_compton_scattering_factors(
     atom_names: list[str],
 ) -> tuple[np.ndarray[tuple[int, int], np.dtype[np.float32]], list[int]]:
     """Return Compton scattering parameters and atomic numbers for the names."""
-    scat_factors = []
-    atomic_numbers = []
+    scat_factors: list[np.ndarray[tuple[int], np.dtype[np.float32]]] = []
+    atomic_numbers: list[int] = []
     for name in atom_names:
         idx = _COMPTON_INDEX.get(name.lower())
         if idx is None:
