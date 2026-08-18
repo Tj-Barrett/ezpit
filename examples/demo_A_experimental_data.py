@@ -16,8 +16,12 @@
 
 Run with:
     uv run --extra examples python examples/generate_example_data.py /tmp/ezpit_demo
-    uv run --extra examples python examples/demo_experimental_data_testingcode_0731_2026.py \
+    uv run --extra examples python examples/demo_A_experimental_data.py \
         /tmp/ezpit_demo/synthetic_exp.chi --background /tmp/ezpit_demo/synthetic_bkg.chi
+
+    or
+
+    python examples/demo_A_experimental_data.py
 """
 
 import argparse
@@ -39,15 +43,25 @@ from ezpit.io import composition_weights, convert_atom_names, group_atoms, parse
 # Command-line arguments (명령행 인자)
 # ----------------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description="Experimental S(q)/F(q)/G(r) processing from a q, I(q) file.")
-parser.add_argument("exp_file", help="Path to the experimental 2-column q, I(q) file (.chi/.iq).")
+
+default_dir = os.path.dirname(os.path.abspath(__file__))
+
+parser.add_argument("exp_file",
+    help="Path to the experimental 2-column q, I(q) file (.chi/.iq).",
+    nargs="?", # Allows default value
+    default=os.path.join(default_dir, 'example_data', 'A_CoPiITOglass.chi')
+)
 parser.add_argument(
     "--background",
+    nargs=1,
     help="Optional path to a 2-column q, I(q) background file. If omitted, no background is subtracted.",
+    default=os.path.join(default_dir, 'example_data', 'A_EmptyQuartzCap.chi')
 )
 parser.add_argument(
     "--composition",
-    default="Co38O119P20",
+    nargs=1,
     help="Chemical composition of the sample (default: %(default)s).",
+    default="Co38O119P20",
 )
 args = parser.parse_args()
 

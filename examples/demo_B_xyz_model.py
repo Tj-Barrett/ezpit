@@ -15,6 +15,10 @@
 Run with:
     uv run --extra examples python examples/demo_xyz_model_0731_2026.py \
         examples/example_data/Iaa-Iaa_solute_0001.xyz
+
+    or
+
+    python examples/demo_B_xyz_model.py
 """
 
 import argparse
@@ -33,7 +37,14 @@ from ezpit.elem_tables import AFF_ELEMENTS, get_aff_scattering_factors
 # Command-line arguments (명령행 인자)
 # ----------------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description="Theoretical PDF from an .xyz atomic model.")
-parser.add_argument("xyz_file", help="Path to the input .xyz structure file (element x y z per line).")
+
+default_dir = os.path.dirname(os.path.abspath(__file__))
+
+parser.add_argument("xyz_file",
+    help="Path to the input .xyz structure file (element x y z per line).",
+    nargs="?", # Allows default value
+    default=os.path.join(default_dir, 'example_data', 'Iaa-Iaa_solute_0001.xyz')
+)
 parser.add_argument("--qmin", type=float, default=0.0, help="Minimum q in 1/A (default: %(default)s).")
 parser.add_argument("--qmax", type=float, default=30.0, help="Maximum q in 1/A (default: %(default)s).")
 parser.add_argument("--qstep", type=float, default=0.01, help="q step size in 1/A (default: %(default)s).")
