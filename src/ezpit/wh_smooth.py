@@ -380,8 +380,8 @@ class QRangeRow(QWidget):
         self.mode_combo.setFixedWidth(125)
         self.mode_combo.setToolTip(
             "WH Smooth   : Whittaker-Henderson smoothing (noise removal)\n"
-            "Linear Interp: replace range with straight line between boundaries\n"
-            "Spline Interp: replace range with cubic spline through anchor points"
+            + "Linear Interp: replace range with straight line between boundaries\n"
+            + "Spline Interp: replace range with cubic spline through anchor points"
         )
         self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
 
@@ -920,7 +920,7 @@ class WHRangeSmoother(QMainWindow):
         self._mouse_hint.setStyleSheet("QLabel { color:#555; padding:0 8px; }")
         self._mouse_hint.setToolTip(
             "Left-drag a box to zoom in  •  Double-click to reset (zoom out)  •  "
-            "Right-drag for continuous zoom  •  Z toggles Pan/Zoom  •  R resets"
+            + "Right-drag for continuous zoom  •  Z toggles Pan/Zoom  •  R resets"
         )
         self.statusBar().addPermanentWidget(self._mouse_hint)
 
@@ -1246,8 +1246,10 @@ class WHRangeSmoother(QMainWindow):
         if full_range_mode:
             r = ranges[0]
             self.statusBar().showMessage(
-                f"Smoothed full range [{r['q0']:.3f}–{r['q1']:.3f}] using "
-                f"Section 4 defaults: λ={r['lambda']:g} ord={r['order']}  ({n_pts} pts)"
+                " ".join((
+                    f"Smoothed full range [{r['q0']:.3f}–{r['q1']:.3f}] using",
+                    f"Section 4 defaults: λ={r['lambda']:g} ord={r['order']}  ({n_pts} pts)",
+                ))
             )
         else:
             self.statusBar().showMessage(

@@ -428,9 +428,11 @@ def load_atom_name_positions(file_path, valid_symbols=None):
 
     if not atom_positions:
         raise ValueError(
-            f"No atom coordinates found in '{file_path}'. Expected lines of the form "
-            "'Element x y z' where the symbol is present in the atomic "
-            "form-factor table."
+            " ".join((
+                f"No atom coordinates found in '{file_path}'. Expected lines of the form",
+                "'Element x y z' where the symbol is present in the atomic",
+                "form-factor table.",
+            ))
         )
 
     return atom_names, np.array(atom_positions, dtype=float)

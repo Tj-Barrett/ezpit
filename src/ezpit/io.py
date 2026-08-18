@@ -62,8 +62,10 @@ def parse_composition(composition: str | dict[str, float] | None) -> dict[str, f
         # [KR] 원소 기호는 대문자로 시작해야 함
         if not ch.isupper():
             raise ValueError(
-                f'Cannot read "{ch}" — expected an element symbol starting '
-                "with a capital letter (e.g. Co 38 O 119 P 1 or Co38O119P)"
+                " ".join((
+                    f'Cannot read "{ch}" — expected an element symbol starting',
+                    "with a capital letter (e.g. Co 38 O 119 P 1 or Co38O119P)",
+                ))
             )
 
         # [EN] Read symbol: uppercase + optional one lowercase.
@@ -96,11 +98,13 @@ def parse_composition(composition: str | dict[str, float] | None) -> dict[str, f
             # [KR] 이온이다: 전체 화학종 이름 구성 (원소 + 숫자 + 부호).
             ion_species = element + ion_digits + compact[j]
             raise ValueError(
-                f"Composition contains an ion: '{ion_species}' (in \"{composition}\"). Ionic species such "
-                "as 'Fe2+' or 'O2-' cannot be used in the composition field — use "
-                f"the neutral element instead (e.g. '{element}' not '{ion_species}'). Ions are only "
-                "supported in the .xyz structure file, not in the "
-                "composition."
+                " ".join((
+                    f"Composition contains an ion: '{ion_species}' (in \"{composition}\"). Ionic species such",
+                    "as 'Fe2+' or 'O2-' cannot be used in the composition field — use",
+                    f"the neutral element instead (e.g. '{element}' not '{ion_species}'). Ions are only",
+                    "supported in the .xyz structure file, not in the",
+                    "composition.",
+                ))
             )
 
         # [EN] Read quantity: digits with at most one decimal point, or nothing (=1).
@@ -293,9 +297,11 @@ def load_atom_name_positions(
 
     if not atom_positions:
         raise ValueError(
-            f"No atom coordinates found in '{file_path}'. Expected lines of the form "
-            "'Element x y z' (e.g. 'C 1.23 4.56 7.89'), where the symbol is in "
-            "your form-factor table (valid_symbols)."
+            " ".join((
+                f"No atom coordinates found in '{file_path}'. Expected lines of the form",
+                "'Element x y z' (e.g. 'C 1.23 4.56 7.89'), where the symbol is in",
+                "your form-factor table (valid_symbols).",
+            ))
         )
 
     atom_positions_arr = np.array(atom_positions, dtype=float)
@@ -349,9 +355,11 @@ def convert_atom_names(composition: str | dict[str, float]) -> list[str]:
     for el, count in comp.items():
         if not float(count).is_integer():
             raise ValueError(
-                f"'{el}': fractional amount {count} cannot be expanded into individual "
-                "atoms. Use composition_weights() instead, or scale every element "
-                "by the same factor (e.g. Li0.2Co0.36 -> Li20Co36)."
+                " ".join((
+                    f"'{el}': fractional amount {count} cannot be expanded into individual",
+                    "atoms. Use composition_weights() instead, or scale every element",
+                    "by the same factor (e.g. Li0.2Co0.36 -> Li20Co36).",
+                ))
             )
 
     return [el for el, count in comp.items() for _ in range(int(count))]

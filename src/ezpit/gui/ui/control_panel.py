@@ -715,9 +715,9 @@ class ControlPanel(QWidget):
                         self,
                         "Ions in composition",
                         f"The composition contains ions ({shown}).\n\n"
-                        "Compton scattering cannot use ions \u2014 please enter "
-                        "neutral element symbols only (e.g. 'Fe' not 'Fe2+', "
-                        "'O' not 'O2-').",
+                        + "Compton scattering cannot use ions \u2014 please enter "
+                        + "neutral element symbols only (e.g. 'Fe' not 'Fe2+', "
+                        + "'O' not 'O2-').",
                     )
                     return
                 calculate_compton(self)
@@ -839,11 +839,13 @@ class ControlPanel(QWidget):
         QMessageBox.warning(
             self,
             "Ions in composition",
-            "The composition contains ionic species: {}.\n\n"
-            "Compton scattering is defined for neutral atoms only, so ions "
-            "cannot be used here. Please enter neutral element symbols "
-            "(e.g. 'Fe' instead of 'Fe2+', 'O' instead of 'O2-') for the "
-            "Compton calculation.".format(", ".join(ions)),
+            (
+                "The composition contains ionic species: {}.\n\n"
+                + "Compton scattering is defined for neutral atoms only, so ions "
+                + "cannot be used here. Please enter neutral element symbols "
+                + "(e.g. 'Fe' instead of 'Fe2+', 'O' instead of 'O2-') for the "
+                + "Compton calculation."
+            ).format(", ".join(ions)),
         )
 
     def _selected_xyz_path(self):
@@ -935,9 +937,9 @@ class ControlPanel(QWidget):
         box.setWindowTitle("Which composition to use?")
         box.setText(
             "The composition differs from the selected .xyz file.\n\n"
-            f"File:  {os.path.basename(xyz_path)}  →  {xyz_comp}\n"
-            f"Entered:  {field_text}\n\n"
-            "Calculate from the .xyz file or from the composition you entered?"
+            + f"File:  {os.path.basename(xyz_path)}  →  {xyz_comp}\n"
+            + f"Entered:  {field_text}\n\n"
+            + "Calculate from the .xyz file or from the composition you entered?"
         )
         from_file_btn = box.addButton("From .xyz file", QMessageBox.ButtonRole.AcceptRole)
         from_input_btn = box.addButton("From entered composition", QMessageBox.ButtonRole.AcceptRole)
@@ -1045,9 +1047,9 @@ class ControlPanel(QWidget):
             box.setWindowTitle("Background q-axis does not match")
             box.setText(
                 mismatch + "\n\n"
-                "Subtraction normally requires the same q values.\n"
-                "The background is interpolated onto the sample q-grid; "
-                "please check the result."
+                + "Subtraction normally requires the same q values.\n"
+                + "The background is interpolated onto the sample q-grid; "
+                + "please check the result."
             )
             box.setStandardButtons(QMessageBox.StandardButton.Ok)
             box.exec()
