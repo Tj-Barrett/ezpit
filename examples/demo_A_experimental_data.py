@@ -15,9 +15,8 @@
      원자 form factor와 Compton 파라미터는 내장 원소 테이블에서 가져옵니다.
 
 Run with:
-    uv run --extra examples python examples/generate_example_data.py /tmp/ezpit_demo
     uv run --extra examples python examples/demo_A_experimental_data.py \
-        /tmp/ezpit_demo/synthetic_exp.chi --background /tmp/ezpit_demo/synthetic_bkg.chi
+        /example_data/A_CoPiITOglass.chi --background /example_data/A_EmptyQuartzCap.chi
 
     or
 
@@ -48,18 +47,16 @@ default_dir = os.path.dirname(os.path.abspath(__file__))
 
 parser.add_argument("exp_file",
     help="Path to the experimental 2-column q, I(q) file (.chi/.iq).",
-    nargs="?", # Allows default value
+    nargs="?",  # Allows default value
     default=os.path.join(default_dir, 'example_data', 'A_CoPiITOglass.chi')
 )
 parser.add_argument(
     "--background",
-    nargs=1,
     help="Optional path to a 2-column q, I(q) background file. If omitted, no background is subtracted.",
     default=os.path.join(default_dir, 'example_data', 'A_EmptyQuartzCap.chi')
 )
 parser.add_argument(
     "--composition",
-    nargs=1,
     help="Chemical composition of the sample (default: %(default)s).",
     default="Co38O119P20",
 )

@@ -13,7 +13,7 @@
      가져오므로 외부 데이터베이스 파일이 필요 없습니다.
 
 Run with:
-    uv run --extra examples python examples/demo_xyz_model_0731_2026.py \
+    uv run --extra examples python examples/demo_B_xyz_model.py
         examples/example_data/Iaa-Iaa_solute_0001.xyz
 
     or
@@ -42,7 +42,7 @@ default_dir = os.path.dirname(os.path.abspath(__file__))
 
 parser.add_argument("xyz_file",
     help="Path to the input .xyz structure file (element x y z per line).",
-    nargs="?", # Allows default value
+    nargs="?",  # Allows default value
     default=os.path.join(default_dir, 'example_data', 'Iaa-Iaa_solute_0001.xyz')
 )
 parser.add_argument("--qmin", type=float, default=0.0, help="Minimum q in 1/A (default: %(default)s).")

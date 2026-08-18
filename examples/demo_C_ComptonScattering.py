@@ -8,15 +8,15 @@
      산란 강도를 계산합니다. 정수/소수 조성을 모두 지원합니다.
 
 Run with:
-    uv run --extra examples python examples/demo_Comptonscattering_0731_2026.py \
+    uv run --extra examples python examples/demo_C_ComptonScattering.py
         Li0.2Co0.36Mn0.37Ni0.07
 
     or
 
     python examples/demo_C_ComptonScattering.py
 """
-import os
 import argparse
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,13 +39,15 @@ default_dir = os.path.dirname(os.path.abspath(__file__))
 parser.add_argument(
     "composition",
     help="Chemical composition string, e.g. 'Li0.2Co0.36Mn0.37Ni0.07' or 'Co38O119P20'.",
-    nargs="?", # Allows default value
+    nargs="?",  # Allows default value
     default="Co38O119P20"
 )
 parser.add_argument(
     "--wavelength", type=float, default=0.1665, help="X-ray wavelength in Angstrom (default: %(default)s)."
 )
-parser.add_argument("--alpha", type=int, default=3, choices=[2, 3], help="Breit-Dirac recoil parameter, 2 or 3 (default: %(default)s).")
+parser.add_argument(
+    "--alpha", type=int, default=3, choices=[2, 3], help="Breit-Dirac recoil parameter, 2 or 3 (default: %(default)s)."
+)
 parser.add_argument("--qmin", type=float, default=0.0, help="Minimum q in 1/A (default: %(default)s).")
 parser.add_argument("--qmax", type=float, default=30.0, help="Maximum q in 1/A (default: %(default)s).")
 parser.add_argument("--qstep", type=float, default=0.01, help="q step size in 1/A (default: %(default)s).")
