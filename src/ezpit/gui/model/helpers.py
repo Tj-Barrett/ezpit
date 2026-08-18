@@ -1,107 +1,14 @@
 import os
-from collections import Counter
 
 import numpy as np
 
+from ezpit.io import (
+    composition_weights,  # noqa: F401 (re-exported for callers of this module)
+    group_atoms,  # noqa: F401 (re-exported for callers of this module)
+    parse_composition,  # noqa: F401 (re-exported for callers of this module)
+)
+
 # helpers gathered from EZPIT
-
-
-def parse_composition(composition):
-    """
-    Parse a composition string from the Control Panel and turns it into a dictionary.
-
-    Both the spaced and the compact writing style are accepted, and a quantity
-    of 1 may be omitted. All of the following give {'Co': 38, 'O': 119, 'P': 1}:
-
-        'Co 38 O 119 P 1'     (spaced, explicit 1)
-        'Co 38 O 119 P'       (spaced, omitted 1)
-        'Co38O119P1'          (compact, explicit 1)
-        'Co38O119P'           (compact, omitted 1)
-
-    Further examples:
-        'Si 1 O 2' --> {'Si': 1, 'O': 2}
-        'SiO2'     --> {'Si': 1, 'O': 2}
-        'CoO119P'  --> {'Co': 1, 'O': 119, 'P': 1}
-        'Co38OP'   --> {'Co': 38, 'O': 1, 'P': 1}
-
-    Fractional amounts are also accepted, so a composition may be written the
-    way it usually appears in a paper. Scaling every element by the same factor
-    describes the same material and gives identical form-factor averages:
-
-        'Li0.2Co0.36Mn0.37Ni0.07'  ==  'Li20Co36Mn37Ni7'
-
-    Note that the factor must be applied to *every* element. Scaling only one
-    of them ('Li20Co36Mn370Ni7') describes a different material.
-
-    Rules:
-      - An element symbol is one uppercase letter optionally followed by one
-        lowercase letter (H, O, Si, Co, Mn, ...). Correct capitalisation is
-        required, exactly as elsewhere in EZPDF.
-      - A quantity is a positive number, integer or decimal; if omitted it
-        defaults to 1. Whole numbers are returned as int, so ordinary
-        compositions behave exactly as before.
-      - Whitespace anywhere is ignored.
-      - A repeated element is summed ('CoOCo' --> {'Co': 2, 'O': 1}).
-    """
-    if composition is None or composition.strip() == "":
-        raise ValueError("The composition field must not be empty")
-
-    # Drop all whitespace so 'Co 38 O 119' and 'Co38O119' parse identically.
-    compact = "".join(ch for ch in composition if not ch.isspace())
-
-    composition_dict = Counter()
-    i = 0
-    length = len(compact)
-    while i < length:
-        ch = compact[i]
-
-        # An element symbol must start with an uppercase letter.
-        if not ch.isupper():
-            raise ValueError(
-                f'Cannot read "{ch}" — expected an element symbol starting '
-                f"with a capital letter (e.g. Co 38 O 119 P 1 or Co38O119P)"
-            )
-
-        # Read the symbol: uppercase letter + optional one lowercase letter.
-        element = ch
-        i += 1
-        if i < length and compact[i].islower():
-            element += compact[i]
-            i += 1
-
-        # Read the quantity: digits with at most one decimal point, or nothing
-        # (in which case it defaults to 1).
-        digits = ""
-        seen_dot = False
-        while i < length and (compact[i].isdigit() or compact[i] == "."):
-            if compact[i] == ".":
-                if seen_dot:
-                    raise ValueError(f"'{element}': count has more than one decimal point")
-                seen_dot = True
-            digits += compact[i]
-            i += 1
-
-        if digits == "":
-            quantity = 1
-        else:
-            try:
-                quantity = float(digits)
-            except ValueError:
-                raise ValueError(f"'{element}': '{digits}' is not a valid number") from None
-            if quantity <= 0:
-                raise ValueError(f"'{element}': count must be a positive number (got {digits})")
-            # Keep whole numbers as int so that existing integer-based code
-            # (and the preview text) is unchanged for ordinary compositions.
-            if float(quantity).is_integer():
-                quantity = int(quantity)
-
-        composition_dict[element] += quantity
-
-    if not composition_dict:
-        raise ValueError(f'Invalid composition string "{composition}": no element found')
-
-    return composition_dict
-
 
 # Element symbol -> full name. Used to disambiguate easily-confused symbols
 # (e.g. 'C' carbon vs 'Co' cobalt) in the Composition preview label.
@@ -273,83 +180,6 @@ def preview_composition(text):
     else:
         message = " ,   ".join(parts) + f"      ({int(total)} atoms)"
     return {"ok": True, "message": message, "parsed": parsed}
-
-
-def convert_atom_names(composition: dict) -> list[str]:
-    """
-    If composition = {'Co': 3, 'O': 4, 'P': 1},.
-
-    atom_names = losa.convert_atom_names(composition)
-    print('atom_names = ', atom_names)
-    --> atom_names = ['Co', 'Co', 'Co', 'O', 'O', 'O', 'O', 'P'].
-
-    Only whole-number compositions can be expanded this way. For a composition
-    that may contain fractional amounts, use composition_weights() instead.
-    """
-    for el, count in composition.items():
-        if not float(count).is_integer():
-            raise ValueError(
-                f"'{el}': fractional amount {count} cannot be expanded into "
-                f"individual atoms. Use composition_weights() instead, or "
-                f"scale every element by the same factor "
-                f"(e.g. Li0.2Co0.36 -> Li20Co36)."
-            )
-    return [el for el, count in composition.items() for _ in range(int(count))]
-
-
-def composition_weights(composition: dict):
-    """
-    Turn a composition dictionary into unique element names and their amounts.
-
-    This is the fraction-safe counterpart of convert_atom_names() +
-    group_atoms(). Rather than listing one entry per atom, it keeps one entry
-    per unique element together with how much of it is present, which is all
-    the form-factor averages actually need:
-
-        <f>   = sum_k(c_k * f_k)   / sum_k(c_k)
-        <f^2> = sum_k(c_k * f_k^2) / sum_k(c_k)
-
-    Because both averages are normalised by the total, scaling every element by
-    the same factor leaves the result unchanged. These all give identical
-    averages:
-
-        {'Li': 0.2, 'Co': 0.36, 'Mn': 0.37, 'Ni': 0.07}
-        {'Li': 20,  'Co': 36,   'Mn': 37,   'Ni': 7}
-        {'Li': 200, 'Co': 360,  'Mn': 370,  'Ni': 70}
-
-    Returns
-    -------
-    (list[str], numpy.ndarray)
-        Unique element names, and their amounts as floats in the same order.
-    """
-    if not composition:
-        raise ValueError("The composition must not be empty")
-
-    names = list(composition.keys())
-    weights = np.asarray([float(composition[el]) for el in names], dtype=float)
-
-    if np.any(weights <= 0):
-        raise ValueError("All composition amounts must be positive")
-
-    return names, weights
-
-
-def group_atoms(atom_names):
-    """
-    Get unique atom names, their counts, and the index of atom in the unique.
-
-    name list. Results will be used by other functions.
-            # if composition = {'Co':2, 'O':1, 'P':1},
-            counter =  Counter({'Co': 2, 'O': 1, 'P': 1})
-            atom_unique_names =  ['Co', 'O', 'P']
-            atom_counts =  [2 1 1]  # "2" is for 'Co', "1" is for 'O', "1" is for 'P'
-            atom_indices  =  [0 0 1 2] #.
-    """
-    counter = Counter(atom_names)
-    atom_uni_names = list(counter.keys())
-    atom_counts = list(counter.values())
-    atom_indices = [atom_uni_names.index(atom) for atom in atom_names]
-    return atom_uni_names, np.asarray(atom_counts), np.asarray(atom_indices)
 
 
 def detect_data_start(path):
