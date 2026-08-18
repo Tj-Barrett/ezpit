@@ -521,7 +521,10 @@ def cal_Gr_integral(
                  - list_r: 생성된 r 축 (단위: A).
                  - list_Gr: 계산된 G(r) 값.
     """
-    list_r = np.arange(rmin, rmax + rstep, rstep)
+    # dtype=float guards against integer rmin/rmax/rstep silently truncating
+    # list_Gr (via zeros_like below) to an int array, which would floor every
+    # computed G(r) value to 0.
+    list_r = np.arange(rmin, rmax + rstep, rstep, dtype=np.float64)
     Fq = (Sq - 1) * q
     qstep = q[1] - q[0]
     list_Gr = np.zeros_like(list_r)
@@ -888,6 +891,9 @@ def cal_expSq(
     norm_list_Sq = list_Sq - polynomial_for_sq  # [EN] Remove polynomial background / [KR] 다항식 배경 제거
     list_Fq = q_range * (norm_list_Sq - 1.0)
 
+    # NOTE: both branches currently return the identical 13-value tuple in the
+    # identical order - return_Iq has no effect on the result here
+    # tests/test_processing.py::test_cal_expSq_return_Iq_true_matches_false.
     if return_Iq:
         return (
             q_range,
