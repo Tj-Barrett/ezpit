@@ -9,9 +9,9 @@ https://algotom.readthedocs.io/en/latest/toc/section1/section1_1.html
 Setting up a Python workspace
 https://algotom.readthedocs.io/en/latest/toc/section4/section4_1.html
 
-***** To obtain I(q), S(q), F(q), G(r) from input xyz coordinates, or to derive S(q), F(q), G(r) from experimental I(q) 
-or Compton scattering patterns, please refer to the files located in the """examples""" directory. ******
-Sooner or later, we will incorporate various fitting functions to assess input models using experimental data.
+**To obtain I(q), S(q), F(q), G(r) from input xyz coordinates, or to derive S(q), F(q), G(r) from experimental I(q) 
+or Compton scattering patterns, please refer to the files located in the "examples" directory.**
+
 
 
 Input file
@@ -24,7 +24,7 @@ match their name with the one in the atomic form factor file (aff_elementonly.tx
 This file can be found in the "data" folder of EZPIT. Here are some examples of xyz 
 coordinate file format.
 
-![img_1.png](img_1.png)
+![img_1.png](assets/img_1.png)
 
 An experimental G(r) file is a text file that contains the radial distribution 
 function of a material. The file has two columns: the first one is the distance r 
@@ -32,7 +32,7 @@ in angstroms, and the second one is the value of G(r) at that distance.
 The file does not have any header or footer lines, and the columns are separated by 
 spaces or tabs. An example of an experimental G(r) file is:
 
-![img_2.png](img_2.png)
+![img_2.png](assets/img_2.png)
 
 When you use xPDFsuite or pdggetX2 to produce G(r), you may notice some extra lines 
 at the beginning of the file. These are header or footer lines that contain some metadata. 
@@ -46,7 +46,7 @@ Acta Cryst. (1995). A51, 416-413 and PDFgetX2 library”.
 Also International Tables for Crystallography (2006). Vol. C, ch. 4.3, pp. 259-429” provides scattering form factor. 
 The equation of atomic form factor is 
 
-![img_3.png](img_3.png)
+![img_3.png](assets/img_3.png)
 
 where f(k) is the atomic form factor of the i-th atom or ion, q is the momentum transfer, 
 ai, bi and C are the parameters from the table, and the summation is over four terms.
@@ -55,7 +55,7 @@ When the code reads each atom or ions in ".xyz coordinate file", the code finds 
 each atom or ions in “aff_elementonly.txt” and picks the corresponding parameters 
 such as ai, bi and C in the “aff_parmonly.txt”. 
 
-![img_4.png](img_4.png)
+![img_4.png](assets/img_4.png)
 
 
 Setup of input file path
@@ -64,7 +64,7 @@ Setup of input file path
 As an example, please specify the file path of experimental G(r), .xyz coordinate file, 
 aff_elementonly.txt, and aff_paramonly.txt.
 
-![img_5.png](img_5.png)
+![img_5.png](assets/img_5.png)
 
 User input information
 ======================
@@ -79,24 +79,24 @@ I(q) calculation
 We applied the Debye formula to calculate the scattering intensity I(q) from 
 the atomic positions in the input .xyz coordinate file.
 
-![img_6.png](img_6.png)
+![img_6.png](assets/img_6.png)
 
 The total coherent scattering intensity, I(q), is theoretically defined as the sum of two fundamental components: 
 self-scattering (i = j) and distinct-pair scattering (i ≠ j), a relationship clearly illustrated by the provided image using a three-element system (A, B, C).
 
-![I(q) calculation_Basic equation_example.png](I%28q%29%20calculation_Basic%20equation_example.png)
+![I(q) calculation_Basic equation_example.png](assets/I%28q%29%20calculation_Basic%20equation_example.png)
 
 If sample is water (H2O,  H1, H2, O1), I(q) = (fH1H1 + fH2H2 + fO1O1)2 = (2fH2 + fO2)
 When q = zero (0), sin(qrij)/(qrij) = 1, So, the Debye formula will be:
 
-![img_8.png](img_8.png)
+![img_8.png](assets/img_8.png)
 
 If sample is water (H2O,  H1, H2, O1), I(q) = (fH1 + fH2 + fO1)2 = (2fH + fO)2 
 One possible way to explain this is:
 The .xyz coordinate file contains the positions of the atoms in a molecule. 
 For example, if the .xyz coordinate file has 
 
-![img_9.png](img_9.png)
+![img_9.png](assets/img_9.png)
 
 It means that there are three atoms: one iridium and two oxygen. 
 To calculate the scattering intensity I(q) as a function of the momentum transfer q, 
@@ -105,7 +105,7 @@ At q = zero (0), 2nd term is only considered for I(q) When q > 0,
 all pairs are considered as a matrix like below. Diagonal components (when I = j) 
 will be  2nd term which is same as when q=zero.
 
-![img_10.png](img_10.png)
+![img_10.png](assets/img_10.png)
 
 To speed up the computation of I(q) and avoid redundant calculations, 
 we used a matrix approach. The function "def group_atoms(atom_names)" 
@@ -113,14 +113,14 @@ allows us to extract various information from the .xyz coordinate file,
 such as the names of the atoms, their number, their index, 
 and their diversity.
 
-![img_11.png](img_11.png)
+![img_11.png](assets/img_11.png)
 
 S(q) calculation
 ================
 
 To determine the structure function S(q), we applied the following formula.
 
-![img_12.png](img_12.png)
+![img_12.png](assets/img_12.png)
 
 The function “calculate_Sq” takes several arguments, such as atom_indices, 
 scattering_factors, atom_distance_matrix, qmin, qmax, qstep, and return_Iq. 
@@ -135,13 +135,13 @@ The integral calculation method is more time-consuming than the IFFT method
 because it requires repeated calculations from rmin to rmax . For each r value, 
 the function G(r) has to be integrated from qmin to qmax.
 
-![img_13.png](img_13.png)
+![img_13.png](assets/img_13.png)
 
 To avoid repletion of calculation, a list was used and please see the function of 
 “calculate_Gr_integral”. The following figure illustrates the quality of 
 PDF spectrum with different rsetp.
 
-![img_14.png](img_14.png)
+![img_14.png](assets/img_14.png)
 
 The IFFT method is more efficient than the integral method, but it needs 
 the relation between q (reciprocal space) and r (real space) to obtain 
@@ -159,7 +159,7 @@ then it is necessary to add a zero value (or an extrapolated or interpolated val
 for F(q) between zero and qmin before applying the IFFT.
 
 
-![img_15.png](img_15.png)
+![img_15.png](assets/img_15.png)
 
 The following figure illustrates how to pad the data by interpolation and 
 extrapolation when the line below qmin is zero. This technique helps to
@@ -168,7 +168,7 @@ The padding is done by fitting a straight line (y = ax or y=ax +b) to
 the data points and extending it beyond the original range of qmin and qmax.
 In this code, “interpolate.interp1d (extrapolation=orangeline)” is used fill gap between qmin and zero.
 
-![img_16.png](img_16.png)
+![img_16.png](assets/img_16.png)
 
 The following paragraph shows how to improve the resolution of G(r) 
 by using zeropad in F(q). Zero padding is a technique that inserts zeros 
@@ -182,21 +182,21 @@ G(r) has fewer data points and the peaks are more jagged.
 Here is an example of the difference between using zeropad and 
 not using zeropad in F(q) and G(r).
 
-![img_25.png](img_25.png)
+![img_25.png](assets/img_25.png)
 
 Example:
 ========
 With the xyz coordinate file, EZPIT provides I(q) to G(r). qdamp was zero (0).
 
-![img_19.png](img_19.png)
+![img_19.png](assets/img_19.png)
 
 No ions in Ni(OH)2-109391-ICSD-10x10x1.xyz. please see the doc directory.
 
-![img_21.png](img_21.png)
+![img_21.png](assets/img_21.png)
 
 Ions in 5IrC_r5a-1Ir_ion.xyz
 
-![img_22.png](img_22.png)
+![img_22.png](assets/img_22.png)
 
 
 Calculating Compton scattering pattern
@@ -214,7 +214,7 @@ Because Balyuzi fitted the quantity Za − Iinc(q) directly, the incoherent cont
 which approaches zero at low q and Za at high q. The total Compton intensity is then the concentration-weighted sum over all atoms, 
 scaled by the Breit–Dirac recoil factor of equation (11), as given in equation below.
 
-![img_26.png](img_26.png)
+![img_26.png](assets/img_26.png)
 
 ca (atomic fraction) = Na/N, where Na is the number of atoms of type a and N is the total number of atoms in the chemical unit); 
 Za is the atomic number of the ath type of atom; and fa(q) is the analytic incoherent-scattering parametrization of Balyuzi (1975). 
@@ -224,7 +224,7 @@ as parametrized by H. H. M. Balyuzi, Acta Cryst. A31, 600 (1975). Balyuzi fitted
 (not the incoherent intensity itself) to a sum of five Gaussians, where Z is the atomic number and s = sin(theta)/lambda. 
 The fitted function is:
 
-![img_27.png](img_27.png)
+![img_27.png](assets/img_27.png)
 
 where F_fit(k) is Balyuzi's five-Gaussian fit for the i-th atom (no ion information). Note that F_fit is NOT an atomic form factor: 
 it equals Z − I_inc, so the incoherent (Compton) intensity per atom is recovered by simple subtraction, I_inc = Z − F_fit. 
@@ -232,26 +232,26 @@ k is converted to momentum transfer (q) using (0.25⋅q/π)**2, where ai, bi, an
 The summation is over five terms. When the code reads each atom in the ".xyz coordinate file," it identifies the row of each atom in 
 "compton_elementonly.txt" and extracts the corresponding parameters such as ai, bi, and C from "compton_parmonly.txt."
 
-![img_28.png](img_28.png)
+![img_28.png](assets/img_28.png)
 
 The code that evaluates Balyuzi's fitted function F_fit(k) is shown below. 
 The incoherent intensity is then obtained as I_inc = Z − F_fit (averaged per atom and multiplied by the Breit–Dirac recoil factor).
 
-![img_29.png](img_29.png)
+![img_29.png](assets/img_29.png)
 
 The necessary information for calculating the Compton scattering pattern is
 
-![img_30.png](img_30.png)
+![img_30.png](assets/img_30.png)
 
 The plot of the calculated Compton scattering pattern for the composition Co2 O2 P1 is displayed below.
 
-![img_31.png](img_31.png)
+![img_31.png](assets/img_31.png)
 
 Also, several important functions in "loadsaver.py" are explained in terms of their roles. Please see the examples below.
 
-![img_32.png](img_32.png)
+![img_32.png](assets/img_32.png)
 
-![img_33.png](img_33.png)
+![img_33.png](assets/img_33.png)
 
 
 Calculating S(q), F(q), G(r) from experimental I(q)
@@ -259,11 +259,11 @@ Calculating S(q), F(q), G(r) from experimental I(q)
 Figure displays the experimental intensity I(q) (denoted as Exp(Raw), the scaled background (represented as Bkg*Scale), 
 the background-subtracted experimental intensity (Net I(q))
 
-![img_36 .png](img_36.png)
+![img_36 .png](assets/img_36.png)
 
 Figure presents the background-subtracted experimental intensity (Net I(q))
 
-![img_37.png](img_37.png)
+![img_37.png](assets/img_37.png)
 
 Figure exhibits the structure function (not normalized S(q) = Standard S(q)) derived from the experimental intensity I(q) 
 (Net I(q) in the previous Figure. The not normalized S(q) shows an increase in intensity as a function of increasing q (1/Å), 
@@ -271,7 +271,7 @@ which is attributed to the imperfection of all subtraction and the instrumental 
 To bring the oscillation of S(q) around 1, a form of correction is necessary.
 EZPDF employs a polynomial correction, similar to the approach taken by xPDFsuite. The normalized S(q) (Poly-corrected S(q)) then oscillates around 1.
 
-![img_38.png](img_38.png)
+![img_38.png](assets/img_38.png)
 
 As an example of polynomial correction of S(q), polynomial order is used instead of r-poly, which is adopted in xPDFsuite.
 The black line represents the "Experimental S(q)" which is not corrected by polynomial.
@@ -284,7 +284,7 @@ Prof. Wen Shen, Penn State Univ.
 https://www.youtube.com/watch?v=G6lVSD0Jci0&t=211s
 Numerical recipes by W. Press, B. Flannery, S. Teukolsky, W. Vetterling
 
-![img_38-1.png](img_38-1.png)
+![img_38-1.png](assets/img_38-1.png)
 
 
 More detail of S(q) calculation
@@ -296,7 +296,7 @@ Actually Numpy _polyfit_ in python use the same method. So, you can used Numpy p
 The experimental structure function S(q) is obtained from the background-subtracted intensity using an ad hoc X-ray normalization 
 (PDFgetX3 by Juhás et al., J. Appl. Cryst. 46, 560 (2013)).
 
-![Experimental S(q) calculation.png](Experimental%20S%28q%29%20calculation.png)
+![Experimental S(q) calculation.png](assets/Experimental%20S%28q%29%20calculation.png)
 
 As an illustrative example, data from disordered cobalt oxide is presented. 
 The top panel displays the scattering intensities for the cobalt oxide sample(black), the background (red), and the resulting background-subtracted data(blue). 
@@ -322,7 +322,7 @@ The weight assigned to the higher order (w_hi) is the fractional part (0.208), a
 Consequently, the final interpolated polynomial correction function is derived as a linear combination given by P(q)7.208 = 0.792 × P(q)7 + 0.208 × P(q)8.
 
 
-![S(q)_calculation_polynomials.png](S(q)_calculation_polynomials.png)
+![S(q)_calculation_polynomials.png](assets/S(q)_calculation_polynomials.png)
 
 The top graph in the second set depicts the data length required before performing an Inverse Fast Fourier Transform (IFFT), 
 which requires padding data from 0 to qmin (red) and after qmax (blue). 
@@ -332,14 +332,14 @@ showing no significant difference between Zero, Constant, and Decay padding for 
 Consequently, the EZPDF GUI version uses Zero padding for any data added after qmax.
 
 
-![Pad_F(q)_Gr result.png](Pad_F(q)_Gr result.png)
+![Pad_F(q)_Gr result.png](assets/Pad_F(q)_Gr result.png)
 
 How  polynomial subtraction in S(q) affect on G(r):
 The  top figure display how two different polynomial orders are superimposed on S(q). 
 The bottom plot illustrates the pair distribution function G(r), revealing that using a high-order polynomial leads to a loss of peaks in the low-r region(red). 
 This occurs because the high-order polynomial subtracts an excessive amount of intensity from the original calculated S(q).
 
-![Polynomial_low_r_Gr.png](Polynomial_low_r_Gr.png)
+![Polynomial_low_r_Gr.png](assets/Polynomial_low_r_Gr.png)
 
 For comparison, S(q) (xpdfsute_S(q)) obtained from xPDFsuite is also displayed. 
 Both S(q) representations are quite similar except low q in S(q).
@@ -349,7 +349,7 @@ both versions of F(q) are identical.
 The bottom figure displays pair distribution functions (integral-G(r), ifft-G(r)) derived from F(q) in the middle figure using inverse fast Fourier transform (ifft). 
 For comparison, G(r) (xpdfsute_G(r)) from xPDFsuite is also shown. the pair distribution functions are identical.
 
-![img_s(q)_f(q)_g(r)_comparison.png](img_s%28q%29_f%28q%29_g%28r%29_comparison.png)
+![img_s(q)_f(q)_g(r)_comparison.png](assets/img_s%28q%29_f%28q%29_g%28r%29_comparison.png)
 
 
 GUI of EZPDF 
@@ -360,21 +360,21 @@ Load file, folder, saved project file which as parameters and file path. View ta
 Select several files and delete all. **File drag-and-drop and deleted file recovery (Undo Delete) functions have been added.** 
 EZPDF panel
 
-![EZPDF_GUI.png](EZPDF_GUI.png)
+![EZPDF_GUI.png](assets/EZPDF_GUI.png)
 
 Under “File”, “Open” each file, or selected files or files in folder can be loaded.
 “Opne Project” A saved project file” can be loaded.
 “Save Project” The parameters of your current working files can be saved as a project file
 
-![EZPDF_panel_fileload.png](EZPDF_panel_fileload.png)
+![EZPDF_panel_fileload.png](assets/EZPDF_panel_fileload.png)
 
 Under “View”, Changes the GUI theme from Light to Dark Mode.
 
-![EZPDF_panel_Darkmode.png](EZPDF_panel_Darkmode.png)
+![EZPDF_panel_Darkmode.png](assets/EZPDF_panel_Darkmode.png)
 
 Clicking the icon launches the EZPDF plot window as a pop-up
 
-![EZPDF_panel_2Dgraph_icon.png](EZPDF_panel_2Dgraph_icon.png)
+![EZPDF_panel_2Dgraph_icon.png](assets/EZPDF_panel_2Dgraph_icon.png)
 
 The picture shows the EZPDF Plot, displaying I(q) (black) including background data (red), and background subtracted data (blue), 
 S(q) with calculated S(q)(black) including polynomial data (red) and polynomial corrected S(q)(blue), F(q) (blue) and smoothed F(q) (black), 
@@ -383,25 +383,25 @@ and G(r)(blue) and G(r) (black) from smoothed F(q).
 So. You compare data with different data which have different parameters.
 Toggles (I(q), S(q), F(q), G(r)) shown in the down right corner) shows specific data only. 
 
-![EZPDF_plot.png](EZPDF_plot.png)
+![EZPDF_plot.png](assets/EZPDF_plot.png)
 
 The picture shows “Dark Mode” of EZPDF and EZPDF Plot.
-![EZPDF__EZPDF_plot_Darkmode.png](EZPDF__EZPDF_plot_Darkmode.png)
+![EZPDF__EZPDF_plot_Darkmode.png](assets/EZPDF__EZPDF_plot_Darkmode.png)
 
 “Save data” saves processed data for experimental data or calculated data from input xyz model data. 
 “Save figure” (not shown) saves EZPDDF Plot as PNG, JPEG, SVG, PDF.
 
-![EZPDF_plot_save_plot option.png](EZPDF_plot_save_plot%20option.png)
+![EZPDF_plot_save_plot option.png](assets/EZPDF_plot_save_plot%20option.png)
 
 EZPDF plot window: multiple plot: 
 X Offset and Y Offset are available.
 Selective plotting is also available.
 
-![EZPDF_plot_offset_miltiplot.png](EZPDF_plot_offset_miltiplot.png)
+![EZPDF_plot_offset_miltiplot.png](assets/EZPDF_plot_offset_miltiplot.png)
 
 Clicking the 'Delete Selected' button will trigger a 'Confirm Deletion' prompt. You can then select either 'Yes' to proceed or 'No' to cancel.
 
-![Delete Selected.png](Delete%20Selected.png)
+![Delete Selected.png](assets/Delete%20Selected.png)
 
 
 Prerequisites
@@ -414,9 +414,9 @@ Note: 32-bit environments, macOS, and Linux are currently untested.
 Dependencies
 Core Framework: PySide6 is the primary dependency for the GUI.
 Compatibility Check: Before installation, please ensure your Python environment aligns with PySide6 version requirements to prevent library conflicts.
-![Reqired software1.png](Reqired%20software1.png)
-![Reqired software2.png](Reqired%20software2.png)
-![Reqired software3.png](Reqired%20software3.png)
+![Reqired software1.png](assets/Reqired%20software1.png)
+![Reqired software2.png](assets/Reqired%20software2.png)
+![Reqired software3.png](assets/Reqired%20software3.png)
 
 
 Smooth function: WH_smooth_GUI
@@ -452,4 +452,4 @@ scaled background α × IBkg(q) (blue), background-subtracted intensity I(q) −
 (green dashed) for comparison. Yellow shaded bands indicate the user-defined q ranges over which smoothing is applied. 
 The inset (green rectangle) expands the q = 1.9–2.3 / Å region. (Bottom) Difference curve ΔI(q) = I(q) – ISmoothed(q).
 
-![WH_smooth_GUI-5.jpg](WH_smooth_GUI-5.jpg)
+![WH_smooth_GUI-5.jpg](assets/WH_smooth_GUI-5.jpg)
