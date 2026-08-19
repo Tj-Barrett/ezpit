@@ -59,11 +59,94 @@ def test_cal_expGr_fft_return_padding_keys():
     }
 
 
+def test_cal_expGr_fft_pad_mode_variants():
+    # Sq != 1 everywhere so Fq = (Sq-1)*q is nonzero at the last q point,
+    # making the three pad_mode behaviors distinguishable.
+    q = np.linspace(0.1, 5.0, 50)
+    Sq = 2.0 * np.ones_like(q)
+    common = {"rmin": 0, "rmax": 2, "rstep": 0.5, "return_padding": True}
+
+    _, _, info_zero = cal_expGr_fft(q, Sq, pad_mode="zero", **common)
+    _, _, info_decay = cal_expGr_fft(q, Sq, pad_mode="decay", **common)
+    _, _, info_constant = cal_expGr_fft(q, Sq, pad_mode="constant", **common)
+
+    last_val = info_zero["F_exp"][-1]
+    assert info_zero["F_pad"].size > 0
+    assert np.allclose(info_zero["F_pad"], 0.0)
+    assert np.allclose(info_decay["F_pad"], np.linspace(last_val, 0, info_decay["F_pad"].size))
+    assert np.allclose(info_constant["F_pad"], last_val)
+
+
+def test_cal_expGr_fft_pad_len_non_positive_skips_padding():
+    # Large rstep -> few IFFT points needed -> no high-Q padding required.
+    q = np.linspace(0.1, 5.0, 50)
+    Sq = 2.0 * np.ones_like(q)
+    _, gr, info = cal_expGr_fft(q, Sq, rmin=0, rmax=2, rstep=5.0, return_padding=True)
+    assert info["F_pad"].size == 0
+    assert np.all(np.isfinite(gr))
+
+
+def test_cal_expGr_fft_low_q_mode_linear():
+    q = np.linspace(0.1, 5.0, 50)
+    Sq = 2.0 * np.ones_like(q)
+    r_list, gr = cal_expGr_fft(q, Sq, rmin=0, rmax=2, rstep=0.5, low_q_mode="linear")
+    assert len(gr) == len(r_list)
+    assert np.all(np.isfinite(gr))
+
+
+def test_cal_expGr_fft_nyquist_rescale():
+    # rmax > pi/qstep forces the finer-grid Nyquist rescue path.
+    q = np.linspace(0.1, 5.0, 50)
+    Sq = 2.0 * np.ones_like(q)
+    r_list, gr, info = cal_expGr_fft(q, Sq, rmin=0, rmax=50, rstep=0.5, return_padding=True)
+    assert info["qstep"] < q[1] - q[0]
+    assert len(gr) == len(r_list)
+    assert np.all(np.isfinite(gr))
+
+
 def test_cal_expGr_fft_from_Fq_zero():
     q = np.linspace(0.1, 5.0, 50)
     Fq = np.zeros_like(q)
     r_list, gr = cal_expGr_fft_from_Fq(q, Fq, rmin=0, rmax=2, rstep=0.5)
     assert np.allclose(gr, np.zeros_like(r_list), atol=1e-8)
+
+
+def test_cal_expGr_fft_from_Fq_pad_mode_variants_differ():
+    q = np.linspace(0.1, 5.0, 50)
+    Fq = q.copy()  # nonzero at the last q point, so pad_mode changes the result
+    common = {"rmin": 0, "rmax": 2, "rstep": 0.5}
+
+    _, gr_zero = cal_expGr_fft_from_Fq(q, Fq, pad_mode="zero", **common)
+    _, gr_decay = cal_expGr_fft_from_Fq(q, Fq, pad_mode="decay", **common)
+    _, gr_constant = cal_expGr_fft_from_Fq(q, Fq, pad_mode="constant", **common)
+
+    assert not np.allclose(gr_zero, gr_decay)
+    assert not np.allclose(gr_zero, gr_constant)
+    assert not np.allclose(gr_decay, gr_constant)
+
+
+def test_cal_expGr_fft_from_Fq_pad_len_non_positive_runs():
+    q = np.linspace(0.1, 5.0, 50)
+    Fq = q.copy()
+    r_list, gr = cal_expGr_fft_from_Fq(q, Fq, rmin=0, rmax=2, rstep=5.0)
+    assert len(gr) == len(r_list)
+    assert np.all(np.isfinite(gr))
+
+
+def test_cal_expGr_fft_from_Fq_low_q_mode_linear():
+    q = np.linspace(0.1, 5.0, 50)
+    Fq = q.copy()
+    r_list, gr = cal_expGr_fft_from_Fq(q, Fq, rmin=0, rmax=2, rstep=0.5, low_q_mode="linear")
+    assert len(gr) == len(r_list)
+    assert np.all(np.isfinite(gr))
+
+
+def test_cal_expGr_fft_from_Fq_nyquist_rescale():
+    q = np.linspace(0.1, 5.0, 50)
+    Fq = q.copy()
+    r_list, gr = cal_expGr_fft_from_Fq(q, Fq, rmin=0, rmax=50, rstep=0.5)
+    assert len(gr) == len(r_list)
+    assert np.all(np.isfinite(gr))
 
 
 def test_cal_expSq_shape_and_sanity():

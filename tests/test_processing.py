@@ -112,6 +112,28 @@ def test_cal_Iq_single_atom():
     assert np.allclose(list_Iq, [9.0, 9.0])
 
 
+def test_cal_Iq_two_atoms_qmin_zero_uses_ones_sin_mat():
+    # Two atoms, constant form factor fi=3 (a_i=0, c=3), separated by d=2.
+    # At q=0, sin(q*r)/(q*r) is 0/0 for off-diagonal terms, so cal_Iq special-cases
+    # q==0 with sin_mat=ones; at q=1 the ordinary sin(q*r)/(q*r) path is exercised
+    # for the same off-diagonal pair, exact closed form: I(q) = fi^2*(2 + 2*sinc term).
+    scattering_factors = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.0]])
+    d = 2.0
+    atom_distance_matrix = np.array([[0.0, d], [d, 0.0]])
+    q_range, list_Iq = cal_Iq(
+        atom_indices=[0, 0],
+        scattering_factors=scattering_factors,
+        atom_distance_matrix=atom_distance_matrix,
+        qmin=0.0,
+        qmax=2.0,
+        qstep=1.0,
+    )
+    expected_q0 = 9.0 * (2 + 2 * 1.0)  # sin_mat all ones at q=0
+    expected_q1 = 9.0 * (2 + 2 * np.sin(d) / d)  # ordinary sin(q*r)/(q*r) at q=1
+    assert np.allclose(q_range, [0.0, 1.0])
+    assert np.allclose(list_Iq, [expected_q0, expected_q1])
+
+
 def test_cal_Sq_single_atom():
     # single atom -> S(q) is identically 1 regardless of the form factor value
     scattering_factors = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.0]])
@@ -141,6 +163,36 @@ def test_cal_Sq_single_atom():
     assert np.allclose(list_Iq, [9.0, 9.0])
     assert np.allclose(list_Sq, [1.0, 1.0])
     assert np.allclose(list_Fq, [0.0, 0.0])
+    assert np.allclose(mean_sq_fi, [9.0, 9.0])
+    assert np.allclose(sq_mean_fi, [9.0, 9.0])
+
+
+def test_cal_Sq_two_atoms_qmin_zero_uses_ones_sin_mat():
+    # Same two-atom setup as test_cal_Iq_two_atoms_qmin_zero_uses_ones_sin_mat,
+    # exercising cal_Sq's own q==0 special case (identical branch, separate function).
+    # Both atoms share the same constant form factor, so mean_sq_fi == sq_mean_fi == 9
+    # at every q, which keeps S(q) and F(q) in closed form.
+    scattering_factors = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.0]])
+    d = 2.0
+    atom_distance_matrix = np.array([[0.0, d], [d, 0.0]])
+
+    q_range, list_Iq, list_Sq, list_Fq, mean_sq_fi, sq_mean_fi = cal_Sq(
+        atom_indices=[0, 0],
+        scattering_factors=scattering_factors,
+        atom_distance_matrix=atom_distance_matrix,
+        qmin=0.0,
+        qmax=2.0,
+        qstep=1.0,
+        return_Iq=True,
+    )
+    expected_Iq = np.array([9.0 * (2 + 2 * 1.0), 9.0 * (2 + 2 * np.sin(d) / d)])
+    expected_Sq = (expected_Iq - 2 * 9.0) / (2 * 9.0) + 1
+    expected_Fq = q_range * (expected_Sq - 1)
+
+    assert np.allclose(q_range, [0.0, 1.0])
+    assert np.allclose(list_Iq, expected_Iq)
+    assert np.allclose(list_Sq, expected_Sq)
+    assert np.allclose(list_Fq, expected_Fq)
     assert np.allclose(mean_sq_fi, [9.0, 9.0])
     assert np.allclose(sq_mean_fi, [9.0, 9.0])
 
@@ -210,3 +262,40 @@ def test_cal_Gr_fft_qdamp_matches_undamped_envelope():
     assert not np.allclose(gr_undamped, 0.0)  # sanity: the baseline isn't trivially zero
     expected_damped = gr_undamped * np.exp(-0.5 * (r_list * qdamp) ** 2)
     assert np.allclose(gr_damped, expected_damped)
+
+
+def test_cal_Gr_fft_nyquist_rescale():
+    # rmax > pi/qstep forces the finer-grid Nyquist rescue path.
+    q = np.linspace(0.1, 5.0, 50)
+    Sq = 1.0 + 0.1 * np.sin(q)
+    r_list, gr = cal_Gr_fft(q, Sq, rmin=0, rmax=50, rstep=0.5)
+    assert len(gr) == len(r_list)
+    assert np.all(np.isfinite(gr))
+
+
+def test_compton_cal_exp_integer_composition_matches_weighted():
+    # Same closed form as test_compton_cal_exp_single_element, but driven by
+    # atom_indices (no weights given), exercising the integer-composition
+    # np.bincount branch instead of the fractional-weights branch.
+    Z = 2.0
+    fic = 4.0
+    compton_scat_parms = np.array(
+        [
+            [0.0] * 11,
+            [0, 0, 0, 0, 0, fic, 0, 0, 0, 0, 0],
+        ]
+    )
+    q_range, list_compton_scat = compton_cal_exp(
+        atom_indices=np.array([0, 0]),  # two atoms of the same element -> c_k = [2.0]
+        compton_scat_parms=compton_scat_parms,
+        compton_scattering_factors=np.array([0.0]),
+        atomic_number=np.array([Z]),
+        qmin=0,
+        qmax=2,
+        qstep=1,
+        wavelength=0.0,
+        alpha=2,
+    )
+    expected = Z - fic**2 / Z
+    assert np.allclose(q_range, [0.0, 1.0])
+    assert np.allclose(list_compton_scat, [expected, expected])

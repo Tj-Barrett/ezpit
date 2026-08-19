@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
+from scipy.linalg import LinAlgError
 
+import ezpit.core.smoothing as sm
 from ezpit.core.smoothing import (
     bandwidth_to_lambda,
     batch_smooth_whittaker,
@@ -72,3 +74,26 @@ def test_batch_smooth_whittaker_linear_rows_are_invariant():
     y_2d = np.array([[1.0, 2.0, 3.0, 4.0, 5.0], [10.0, 8.0, 6.0, 4.0, 2.0]])
     smoothed = batch_smooth_whittaker(y_2d, lambda_=100.0, order=2)
     assert np.allclose(smoothed, y_2d)
+
+
+def test_smooth_whittaker_wraps_linalg_error(monkeypatch):
+    # A genuine Cholesky failure is impractical to construct (A = I + lambda*D'D
+    # is positive definite for any valid lambda_/order/n), so the cho_factor
+    # call is patched to force the LinAlgError branch deterministically.
+    def raise_linalg_error(*args, **kwargs):
+        raise LinAlgError("matrix is not positive definite")
+
+    monkeypatch.setattr(sm, "cho_factor", raise_linalg_error)
+
+    with pytest.raises(RuntimeError, match="Numerical error"):
+        smooth_whittaker([1.0, 2.0, 3.0, 4.0], lambda_=10.0, order=2)
+
+
+def test_smooth_whittaker_wraps_unexpected_error(monkeypatch):
+    def raise_value_error(*args, **kwargs):
+        raise ValueError("unexpected failure")
+
+    monkeypatch.setattr(sm, "cho_solve", raise_value_error)
+
+    with pytest.raises(RuntimeError, match="Unexpected error"):
+        smooth_whittaker([1.0, 2.0, 3.0, 4.0], lambda_=10.0, order=2)

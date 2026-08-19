@@ -1,14 +1,20 @@
+import warnings
+
 import numpy as np
 import pytest
 
 from ezpit.core.io import (
+    _warn_once,
     composition_weights,
     convert_atom_names,
     detect_header_lines,
     group_atoms,
     load_atom_name_positions,
     load_qiq_file,
+    make_folder,
     parse_composition,
+    reset_warning_history,
+    save_txt,
 )
 
 
@@ -89,6 +95,17 @@ def test_parse_composition_rejects_ions(composition: str):
 def test_parse_composition_invalid_raises(composition: str):
     with pytest.raises(ValueError):
         parse_composition(composition)
+
+
+def test_parse_composition_lone_decimal_point_raises():
+    # digits == "." alone fails float(".") inside the try/except.
+    with pytest.raises(ValueError, match="not a valid number"):
+        parse_composition("Co.O2")
+
+
+def test_parse_composition_zero_count_raises():
+    with pytest.raises(ValueError, match="positive number"):
+        parse_composition("Co0O2")
 
 
 @pytest.mark.parametrize(
@@ -321,6 +338,17 @@ def test_load_atom_name_positions_no_atoms_raises(tmp_path):
         load_atom_name_positions(xyz_file, VALID_SYMBOLS)
 
 
+def test_load_atom_name_positions_skips_unparseable_coordinates(tmp_path):
+    # A valid symbol followed by non-numeric tokens is skipped, not a crash.
+    xyz_file = tmp_path / "structure.xyz"
+    xyz_file.write_text("Co bad 0.2 0.3\nO 1.0 2.0 3.0\n")
+
+    names, positions = load_atom_name_positions(xyz_file, VALID_SYMBOLS)
+
+    assert names == ["O"]
+    np.testing.assert_allclose(positions, [[1.0, 2.0, 3.0]])
+
+
 def test_detect_header_lines_and_load_qiq_file(tmp_path):
     data_file = tmp_path / "sample.iq"
     data_file.write_text("# comment header\nsome text header\n1.0 2.0\n2.0 3.0\n3.0 4.0\n")
@@ -329,3 +357,83 @@ def test_detect_header_lines_and_load_qiq_file(tmp_path):
 
     data = load_qiq_file(str(data_file))
     assert np.allclose(data, [[1.0, 2.0], [2.0, 3.0], [3.0, 4.0]])
+
+
+def test_detect_header_lines_skips_blank_and_short_lines(tmp_path):
+    # Blank line and a too-short line ("1.0", 1 column < min_cols) are both
+    # counted as header lines before the first valid 2-column data row.
+    data_file = tmp_path / "sample.iq"
+    data_file.write_text("\n1.0\n1.0 2.0\n2.0 3.0\n")
+
+    assert detect_header_lines(str(data_file), min_cols=2) == 2
+
+
+# ----------------------------------------------------------------------------------
+# make_folder / save_txt
+# ----------------------------------------------------------------------------------
+
+
+def test_make_folder_creates_missing_directory(tmp_path):
+    target = tmp_path / "nested" / "dir" / "file.txt"
+
+    make_folder(str(target))
+
+    assert (tmp_path / "nested" / "dir").is_dir()
+
+
+def test_make_folder_noop_when_directory_exists(tmp_path):
+    target = tmp_path / "file.txt"
+
+    make_folder(str(target))  # tmp_path already exists; should not raise
+
+    assert tmp_path.is_dir()
+
+
+def test_make_folder_raises_on_os_error(tmp_path):
+    # "blocker" is a regular file, so treating it as a directory component
+    # makes os.makedirs fail with an OSError, which make_folder re-raises.
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory")
+
+    with pytest.raises(ValueError, match="Can't create the folder"):
+        make_folder(str(blocker / "sub" / "file.txt"))
+
+
+def test_save_txt_writes_file_and_creates_folder(tmp_path):
+    target = tmp_path / "nested" / "out.txt"
+    q_Iq = np.array([[1.0, 2.0], [2.0, 3.0]])
+
+    save_txt(str(target), q_Iq)
+
+    assert target.exists()
+    np.testing.assert_allclose(np.loadtxt(target), q_Iq)
+
+
+# ----------------------------------------------------------------------------------
+# _warn_once / reset_warning_history
+# ----------------------------------------------------------------------------------
+
+
+def test_warn_once_warns_only_the_first_time():
+    reset_warning_history()  # isolate from warnings emitted by other tests
+    message = "a distinctive warning message for this test"
+
+    with pytest.warns(RuntimeWarning, match=message):
+        _warn_once(message)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        _warn_once(message)  # second call is silent: no warning raised/erroring
+
+
+def test_reset_warning_history_allows_message_again():
+    reset_warning_history()
+    message = "another distinctive warning message"
+
+    with pytest.warns(RuntimeWarning, match=message):
+        _warn_once(message)
+
+    reset_warning_history()
+
+    with pytest.warns(RuntimeWarning, match=message):
+        _warn_once(message)
