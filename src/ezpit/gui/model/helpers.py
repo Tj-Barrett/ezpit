@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 
-from ezpit.io import (
+from ezpit.core.io import (
     composition_weights,  # noqa: F401 (re-exported for callers of this module)
     group_atoms,  # noqa: F401 (re-exported for callers of this module)
     parse_composition,  # noqa: F401 (re-exported for callers of this module)
@@ -121,7 +121,7 @@ def _load_valid_elements():
     global _VALID_ELEMENTS_CACHE
     if _VALID_ELEMENTS_CACHE is not None:
         return _VALID_ELEMENTS_CACHE
-    from ezpit.elem_tables import AFF_ELEMENTS
+    from ezpit.core.elem_tables import AFF_ELEMENTS
 
     _VALID_ELEMENTS_CACHE = set(AFF_ELEMENTS)
     return _VALID_ELEMENTS_CACHE
@@ -275,7 +275,7 @@ def _get_aff_valid_symbols():
     global _AFF_VALID_SYMBOLS
     if _AFF_VALID_SYMBOLS is None:
         try:
-            from ezpit.elem_tables import AFF_ELEMENTS
+            from ezpit.core.elem_tables import AFF_ELEMENTS
 
             _AFF_VALID_SYMBOLS = [str(s).strip() for s in AFF_ELEMENTS]
         except Exception:

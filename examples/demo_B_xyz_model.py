@@ -29,9 +29,9 @@ import timeit
 import matplotlib.pyplot as plt
 import numpy as np
 
-import ezpit.io as losa
-import ezpit.processing as proc
-from ezpit.elem_tables import AFF_ELEMENTS, get_aff_scattering_factors
+import ezpit.core.io as losa
+import ezpit.core.processing as proc
+from ezpit.core.elem_tables import AFF_ELEMENTS, get_aff_scattering_factors
 
 # ----------------------------------------------------------------------------------
 # Command-line arguments (명령행 인자)

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from ezpit import elem_tables as et
+from ezpit.core import elem_tables as et
 
 # --- Table consistency -------------------------------------------------------
 

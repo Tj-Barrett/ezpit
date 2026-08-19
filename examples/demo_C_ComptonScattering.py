@@ -21,12 +21,12 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-import ezpit.processing as proc
-from ezpit.elem_tables import (
+import ezpit.core.processing as proc
+from ezpit.core.elem_tables import (
     get_compton_parameter_only,
     get_compton_scattering_factors,
 )
-from ezpit.io import composition_weights, parse_composition
+from ezpit.core.io import composition_weights, parse_composition
 
 # ----------------------------------------------------------------------------------
 # Command-line arguments (명령행 인자)

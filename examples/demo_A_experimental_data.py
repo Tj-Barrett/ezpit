@@ -30,13 +30,15 @@ import tempfile
 import matplotlib.pyplot as plt
 import numpy as np
 
-import ezpit.processing as proc
-from ezpit.elem_tables import (
+import ezpit.core.processing as proc
+import ezpit.core.reduction as red
+import ezpit.core.smoothing as sm
+from ezpit.core.elem_tables import (
     get_aff_scattering_factors,
     get_compton_parameter_only,
     get_compton_scattering_factors,
 )
-from ezpit.io import composition_weights, convert_atom_names, group_atoms, parse_composition
+from ezpit.core.io import composition_weights, convert_atom_names, group_atoms, parse_composition
 
 # ----------------------------------------------------------------------------------
 # Command-line arguments (명령행 인자)
@@ -139,7 +141,7 @@ scattering_factors = get_aff_scattering_factors(atom_unique_names)
     normalized_intensity,
     normal_scattering_factor,
     normalization_scale,
-) = proc.cal_expSq(
+) = red.cal_expSq(
     atom_indices,
     scattering_factors,
     expqiq_data,
@@ -157,22 +159,22 @@ print("normalization_scale =", normalization_scale)
 # ----------------------------------------------------------------------------------
 # G(r): Lorch function + Whittaker-Henderson smoothing
 # ----------------------------------------------------------------------------------
-Fq_lorch = proc.apply_lorch_function(q, Fq)
-r_lorch, Gr_lorch = proc.cal_expGr_fft_from_Fq(q, Fq_lorch, rmin, rmax, rstep, pad_mode="zero", low_q_mode="linear")
+Fq_lorch = red.apply_lorch_function(q, Fq)
+r_lorch, Gr_lorch = red.cal_expGr_fft_from_Fq(q, Fq_lorch, rmin, rmax, rstep, pad_mode="zero", low_q_mode="linear")
 
 whittaker_lambda = 1000.0
 order = 2
-Fq_smoothed = proc.smooth_whittaker(Fq, lambda_=whittaker_lambda, order=order)
-r_smooth, Gr_from_smoothFq = proc.cal_expGr_fft_from_Fq(
+Fq_smoothed = sm.smooth_whittaker(Fq, lambda_=whittaker_lambda, order=order)
+r_smooth, Gr_from_smoothFq = red.cal_expGr_fft_from_Fq(
     q, Fq_smoothed, rmin, rmax, rstep, pad_mode="zero", low_q_mode="linear"
 )
-r_raw, Gr_from_rawFq = proc.cal_expGr_fft_from_Fq(q, Fq, rmin, rmax, rstep, pad_mode="zero", low_q_mode="linear")
+r_raw, Gr_from_rawFq = red.cal_expGr_fft_from_Fq(q, Fq, rmin, rmax, rstep, pad_mode="zero", low_q_mode="linear")
 
 # [EN] G(r) directly from S(q) with different high-Q padding modes.
 # [KR] 서로 다른 high-Q padding 모드로 S(q)에서 바로 G(r) 계산.
-r3, Gr3 = proc.cal_expGr_fft(q, Sq, rmin, rmax, rstep, pad_mode="decay", low_q_mode="linear")
-r4, Gr4 = proc.cal_expGr_fft(q, Sq, rmin, rmax, rstep, pad_mode="constant", low_q_mode="linear")
-r5, Gr5 = proc.cal_expGr_fft(q, Sq, rmin, rmax, rstep, pad_mode="zero", low_q_mode="linear")
+r3, Gr3 = red.cal_expGr_fft(q, Sq, rmin, rmax, rstep, pad_mode="decay", low_q_mode="linear")
+r4, Gr4 = red.cal_expGr_fft(q, Sq, rmin, rmax, rstep, pad_mode="constant", low_q_mode="linear")
+r5, Gr5 = red.cal_expGr_fft(q, Sq, rmin, rmax, rstep, pad_mode="zero", low_q_mode="linear")
 
 # ----------------------------------------------------------------------------------
 # Save intermediate results (중간 결과 저장)

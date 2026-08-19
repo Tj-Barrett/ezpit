@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ezpit.core.io import reset_warning_history
 from ezpit.gui.controller.graph_controller import (
     calculate_compton,
     update_current_graph,
@@ -36,7 +37,6 @@ from ezpit.gui.model.helpers import (
     parse_composition,
     preview_composition,
 )
-from ezpit.processing import reset_warning_history
 
 from .ui_helpers import add_form_row, add_slider_field
 

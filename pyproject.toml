@@ -27,7 +27,7 @@ dependencies = [
 ]
 
 [project.scripts]
-ezpdf-wh-smooth = "ezpit.wh_smooth:main"
+ezpdf-wh-smooth = "ezpit.whittaker_henderson.wh_smooth:main"
 ezpdf-gui = "ezpit.gui.main:main"
 
 [project.optional-dependencies]
@@ -116,7 +116,7 @@ line-length = 120
 # Large generated data tables; kept in a hand-aligned table-like layout for
 # readability, so exclude from formatting/linting. force-exclude ensures the
 # file is skipped even when passed explicitly (e.g. by pre-commit).
-extend-exclude = ["src/ezpit/elem_tables.py"]
+extend-exclude = ["src/ezpit/core/elem_tables.py"]
 force-exclude = true
 lint.select = [
     "B",       # flake8-bugbear - https://docs.astral.sh/ruff/rules/#flake8-bugbear-b

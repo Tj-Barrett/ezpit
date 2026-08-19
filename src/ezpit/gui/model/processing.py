@@ -2,25 +2,27 @@
 
 import numpy as np
 
-from ezpit.elem_tables import (
+from ezpit.core.elem_tables import (
     get_aff_scattering_factors,
     get_compton_parameter_only,
     get_compton_scattering_factors,
 )
+from ezpit.core.processing import (
+    cal_Sq,
+    compton_cal_exp,
+    create_atom_distance_matrix,
+)
+from ezpit.core.reduction import (
+    cal_expGr_fft,
+    cal_expSq,
+    cal_fq,
+)
+from ezpit.core.smoothing import smooth_whittaker
 from ezpit.gui.model.helpers import (
     composition_weights,
     extract_data,
     group_atoms,
     parse_composition,
-)
-from ezpit.processing import (
-    cal_expGr_fft,
-    cal_expSq,
-    cal_fq,
-    cal_Sq,
-    compton_cal_exp,
-    create_atom_distance_matrix,
-    smooth_whittaker,
 )
 
 

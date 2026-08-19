@@ -1,7 +1,15 @@
 import numpy as np
 import pytest
 
-from ezpit.io import composition_weights, convert_atom_names, group_atoms, load_atom_name_positions, parse_composition
+from ezpit.core.io import (
+    composition_weights,
+    convert_atom_names,
+    detect_header_lines,
+    group_atoms,
+    load_atom_name_positions,
+    load_qiq_file,
+    parse_composition,
+)
 
 
 @pytest.mark.parametrize(
@@ -311,3 +319,13 @@ def test_load_atom_name_positions_no_atoms_raises(tmp_path):
 
     with pytest.raises(ValueError, match="No atom coordinates found"):
         load_atom_name_positions(xyz_file, VALID_SYMBOLS)
+
+
+def test_detect_header_lines_and_load_qiq_file(tmp_path):
+    data_file = tmp_path / "sample.iq"
+    data_file.write_text("# comment header\nsome text header\n1.0 2.0\n2.0 3.0\n3.0 4.0\n")
+
+    assert detect_header_lines(str(data_file)) == 2
+
+    data = load_qiq_file(str(data_file))
+    assert np.allclose(data, [[1.0, 2.0], [2.0, 3.0], [3.0, 4.0]])
