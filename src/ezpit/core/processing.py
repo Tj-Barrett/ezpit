@@ -1,4 +1,5 @@
 import numpy as np
+from numba import njit, prange
 from numpy.typing import NDArray
 from scipy import interpolate
 from scipy.spatial.distance import cdist
@@ -307,6 +308,38 @@ def cal_Iq(
     return q_range, list_Iq
 
 
+@njit(parallel=True, cache=True)
+def _debye_sum(
+    fi_by_atom: NDArray[np.float64], atom_distance_matrix: NDArray[np.float64], q_range: NDArray[np.float64]
+) -> NDArray[np.float64]:
+    """
+    [EN] Numba-jitted Debye double sum I(q) = sum_i sum_j f_i(q) f_j(q) sin(q r_ij)/(q r_ij).
+
+         Parallelized over q (prange), and never materializes an N x N matrix, so it stays
+         cheap on memory for large atom counts. `fi_by_atom` is (num_atom, len(q_range)).
+    [KR] Debye 이중합 계산을 위한 numba JIT 함수입니다. q에 대해 병렬화되어 있으며
+         N x N 행렬을 만들지 않아 원자 수가 많아도 메모리 사용량이 적습니다.
+    """
+    num_atom = atom_distance_matrix.shape[0]
+    n_q = q_range.shape[0]
+    list_Iq = np.empty(n_q, dtype=np.float64)
+    for qi in prange(n_q):
+        q = q_range[qi]
+        total = 0.0
+        for i in range(num_atom):
+            fi_i = fi_by_atom[i, qi]
+            for j in range(num_atom):
+                if i == j:
+                    total += fi_i * fi_i
+                elif q == 0.0:
+                    total += fi_i * fi_by_atom[j, qi]
+                else:
+                    qr = q * atom_distance_matrix[i, j]
+                    total += fi_i * fi_by_atom[j, qi] * (np.sin(qr) / qr)
+        list_Iq[qi] = total
+    return list_Iq
+
+
 def cal_Sq(
     atom_indices: list[int] | NDArray[np.int64],
     scattering_factors: NDArray[np.float64],
@@ -382,43 +415,21 @@ def cal_Sq(
             - mean_sq_fi (numpy.ndarray): [EN] Average of squared form factors <f^2> / [KR] 형상 인자 제곱의 평균
             - sq_mean_fi (numpy.ndarray): [EN] Squared average of form factors <f>^2 / [KR] 평균 형상 인자의 제곱
     """
-    # Theoretical calculation loop
     num_atom = len(atom_indices)
-    num_fact = len(scattering_factors)
-    diag_idx = np.diag_indices(num_atom)
-    distance_matrix_non_zero = np.copy(atom_distance_matrix)
-    distance_matrix_non_zero[diag_idx] = 1.0
-
-    list_Iq = []
-    sq_mean_fi = []
-    mean_sq_fi = []
+    atom_indices = np.asarray(atom_indices)
     q_range = np.arange(qmin, qmax, qstep)
 
-    for q in q_range:
-        fi_mat = np.zeros((num_atom, num_atom))
-        list_fi = []
-        for k in range(num_fact):
-            list_fi.append(_cal_fi(scattering_factors[k], q))
-        list_fi = np.asarray(list_fi)
-        fi_sum, fi2_sum = 0.0, 0.0
-        for i, idx in enumerate(atom_indices):
-            fi = list_fi[idx]
-            fi_mat[i, :] = fi
-            fi_sum = fi_sum + fi
-            fi2_sum = fi2_sum + fi**2
-        if q == 0:
-            sin_mat = np.ones(np.shape(atom_distance_matrix))
-        else:
-            sin_mat = np.sin(q * atom_distance_matrix) / (q * distance_matrix_non_zero)
-        sin_mat[diag_idx] = 1.0
-        Iq = fi_mat * np.transpose(fi_mat) * sin_mat
-        list_Iq.append(np.sum(Iq))
-        sq_mean_fi.append((fi_sum / num_atom) ** 2)
-        mean_sq_fi.append(fi2_sum / num_atom)
+    # Form factor f(q) for every element type at every q, computed in one vectorized shot
+    # (was a `for k in range(num_fact)` Python loop re-run per q).
+    fi_by_type = _cal_fi(scattering_factors.T[:, :, None], q_range)  # (num_fact, len(q_range))
+    fi_by_atom = fi_by_type[atom_indices, :]  # (num_atom, len(q_range))
 
-    list_Iq = np.asarray(list_Iq)
-    mean_sq_fi = np.asarray(mean_sq_fi)  # <f^2>
-    sq_mean_fi = np.asarray(sq_mean_fi)  # <f>^2
+    fi_sum = fi_by_atom.sum(axis=0)
+    fi2_sum = (fi_by_atom**2).sum(axis=0)
+    mean_sq_fi = fi2_sum / num_atom  # <f^2>
+    sq_mean_fi = (fi_sum / num_atom) ** 2  # <f>^2
+
+    list_Iq = np.asarray(_debye_sum(fi_by_atom, atom_distance_matrix, q_range))
     list_Sq = (list_Iq - num_atom * mean_sq_fi) / (num_atom * sq_mean_fi) + 1
     list_Fq = q_range * (list_Sq - 1)
 
