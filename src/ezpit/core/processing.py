@@ -234,7 +234,7 @@ def cal_Iq(
     qmin: float = 0.5,
     qmax: float = 20,
     qstep: float = 0.05,
-) -> tuple[NDArray[np.float64], list[float]]:
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
     """
     [EN] Calculate the total Scattering Intensity I(q) based on the Debye scattering equation.
 
@@ -281,30 +281,13 @@ def cal_Iq(
                  - q_range: Q 값 배열.
                  - list_Iq: 계산된 산란 강도 I(q) 리스트.
     """
-    # Theoretical calculation loop (kept as loop to prevent memory overflow for large N)
-    num_atom = len(atom_indices)
-    num_fact = len(scattering_factors)
-    diag_idx = np.diag_indices(num_atom)
-    distance_matrix_non_zero = np.copy(atom_distance_matrix)
-    distance_matrix_non_zero[diag_idx] = 1.0
-    list_Iq = []
+    atom_indices = np.asarray(atom_indices)
     q_range = np.arange(qmin, qmax, qstep)
-    for q in q_range:
-        fi_mat = np.zeros((num_atom, num_atom))
-        list_fi = []
-        for k in range(num_fact):
-            list_fi.append(_cal_fi(scattering_factors[k], q))
-        list_fi = np.asarray(list_fi)
-        for i, idx in enumerate(atom_indices):
-            fi = list_fi[idx]
-            fi_mat[i, :] = fi
-        if q == 0:
-            sin_mat = np.ones(np.shape(atom_distance_matrix))
-        else:
-            sin_mat = np.sin(q * atom_distance_matrix) / (q * distance_matrix_non_zero)
-        sin_mat[diag_idx] = 1.0
-        Iq = fi_mat * np.transpose(fi_mat) * sin_mat
-        list_Iq.append(np.sum(Iq))
+
+    fi_by_type = _cal_fi(scattering_factors.T[:, :, None], q_range)  # (num_fact, len(q_range))
+    fi_by_atom = fi_by_type[atom_indices, :]  # (num_atom, len(q_range))
+
+    list_Iq = np.asarray(_debye_sum(fi_by_atom, atom_distance_matrix, q_range))
     return q_range, list_Iq
 
 
